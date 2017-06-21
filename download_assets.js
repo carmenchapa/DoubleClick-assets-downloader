@@ -1,103 +1,117 @@
 // Create array to hold all the assets we want to download
 var assetsToDownload = [];
-
-
-// document.getElementById("gwt-debug-assets-details-panel-folder-base-path").removeAttribute('readonly');
-
-
-/*
-// Adding listener
-var folderPath = document.getElementById("gwt-debug-assets-details-panel-folder-base-path");
-folderPath.addEventListener("change", function(e) {
-    setTimeout(function() {
-        console.log('changed');
-        console.log(folderPath.value);
-    }, 3000);
-});
-
-// Create event and fire it.
-var changeEvent = new Event("HTMLEvents");
-changeEvent.initEvent("change", true, true);
-folderPath.dispatchEvent(changeEvent);
-*/
+var arrFolderBasePaths = [];
+var titles = [];
 
 
 //Save all folder base paths
 var saveFolderBasePaths = document.getElementsByClassName('KPLCD5C-b-Qd');
 
-saveFolderBasePaths[0].click();
-console.log('clicked');
-var arrFolderBasePaths = [];
 
 var i = 0;
 
 function myLoop() {
     setTimeout(function() {
         saveFolderBasePaths[i].click();
-        var folderPath = document.getElementById("gwt-debug-assets-details-panel-folder-base-path");
+        // var folderPath = document.getElementById("gwt-debug-assets-details-panel-folder-base-path");
         setTimeout(function() {
-            console.log('changed');
-            console.log(document.getElementById("gwt-debug-assets-details-panel-folder-base-path").value);
-            arrFolderBasePaths.push(document.getElementById("gwt-debug-assets-details-panel-folder-base-path").value);
+            arrFolderBasePaths.push({
+                url: document.getElementById("gwt-debug-assets-details-panel-folder-base-path").value,
+                folder: document.getElementById("gwt-debug-assets-details-panel-name").title
+            });
             i++;
             if (i < saveFolderBasePaths.length) {
                 myLoop();
+            } else {
+                checkAndDownload();
+                // displayInput();
             }
         }, 3000);
 
     }, 1000)
 }
 
+//We should find a way to detect the change instead use setTimeout here, webKitMutationObserver could work
+
+
 myLoop();
 console.log(arrFolderBasePaths);
 
-//Check all the boxes
-/*
-var saveCheckboxes = document.getElementsByClassName("gwt-CheckBox")
-for (i = 0; i < saveCheckboxes.length; i++) {
-    saveCheckboxes[i].childNodes[0].checked = true;
-}
-
-document.querySelector('a[title="Download dynamic paths"]').click();
-*/
-
-// var saveCheckbox = document.getElementsByClassName("gwt-CheckBox")[0].childNodes[0];
-// console.log(saveCheckbox[0]);
-// saveCheckbox.checked = true;
-
-/*
-// Get the name of the folder you are currently viewing. The assets will be saved to the same folder name when downloaded locally.
-var saveToDirectoryHTMLElement = document.getElementById("gwt-debug-assets-details-panel-name");
-var saveToDirectory = saveToDirectoryHTMLElement.title;
-
-// Get the 'folder base path' which will be combined with each asset name
-var folderBasePathHTMLElement = document.getElementById("gwt-debug-assets-details-panel-folder-base-path");
-var folderBasePath = folderBasePathHTMLElement.value;
-
-// Get all of the assets from the page
-var assets = document.getElementsByClassName("KPLCD5C-b-Sd");
-
-// If the asset is an image, it will contain this string
-var substring = "assets-table-asset";
-
-// Loop through all of the assets and add them to the array
-for (i = 0; i < assets.length; i++) {
-    // Get the ID of the asset. Need to determine if it's an image or a folder. Only want to download the images.
-    var assetId = assets[i].id;
-    // If the asset is an image, add it to the array to be downloaded
-    if (assetId.includes(substring)) {
-        var imageSrc = folderBasePath + assets[i].innerText;
-        console.log(imageSrc);
-        var filepath = saveToDirectory + "/" + assets[i].innerText;
-        console.log(filepath);
-        assetsToDownload.push({
-            url: imageSrc,
-            filename: filepath
-        })
-        console.log(assetsToDownload);
+//Check all the boxes and download de CSV file
+function checkAndDownload() {
+    var saveCheckboxes = document.getElementsByClassName("gwt-CheckBox")
+    for (i = 0; i < saveCheckboxes.length; i++) {
+        saveCheckboxes[i].childNodes[0].checked = true;
     }
+    document.querySelector('a[title="Download dynamic paths"]').click();
+    displayInput();
 }
 
-// Now you've got an array of the assets you want, pass it back to listener.js to download
-chrome.runtime.sendMessage(assetsToDownload);
-*/
+
+
+
+//When the paths are saved and the file is downloaded display the input button
+function displayInput() {
+    var menu = document.getElementsByClassName('KPLCD5C-b-R');
+    console.log(menu);
+
+    var fileChooser = document.createElement("input");
+    fileChooser.type = 'file';
+    console.log('appending input');
+    fileChooser.addEventListener('change', function(evt) {
+        console.log('inside content script change event');
+        var f = evt.target.files[0];
+        if (f) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                setFileData(event.target.result);
+            }
+            reader.readAsText(f);
+        }
+    });
+    document.getElementsByClassName('KPLCD5C-b-R')[0].appendChild(fileChooser);
+}
+
+function setFileData(data) {
+    fileData = data;
+    getDirtyData();
+}
+
+function getDirtyData() {
+    var data = fileData;
+    var dirtyData = data.split('\n');
+    dirtyData.pop();
+    createTitlesArray(dirtyData);
+}
+
+function createTitlesArray(data) {
+    titles = data.map(function(val) {
+        var comma = val.indexOf(",");
+        var slash = val.indexOf("/");
+        var name = val.substring(0, comma);
+        var imgName = name.substring(slash + 1);
+        console.log(imgName);
+        var folder = val.substring(0, slash);
+        return { name: imgName, folder: folder, filename: name };
+    });
+    console.log(titles);
+    createAssetsToDownload();
+}
+
+
+function createAssetsToDownload() {
+    var assetsToDownload = titles.map(function(val) {
+        var obj = {};
+        console.log(val.folder);
+        var folderUrl = arrFolderBasePaths.filter(function(v) {
+            return v.folder === val.folder;
+        });
+        obj['url'] = folderUrl[0].url + val.name;
+        obj['filename'] = val.filename;
+        return obj;
+    })
+    console.log(assetsToDownload);
+
+    // Now you've got an array of the assets you want, pass it back to listener.js to download
+    chrome.runtime.sendMessage(assetsToDownload);
+}
