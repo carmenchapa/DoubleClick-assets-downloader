@@ -4,6 +4,7 @@ var arrFolderBasePaths = [];
 var titles = [];
 
 
+
 //Save all folder base paths
 var saveFolderBasePaths = document.getElementsByClassName('KPLCD5C-b-Qd');
 
@@ -52,11 +53,18 @@ function checkAndDownload() {
 
 //When the paths are saved and the file is downloaded display the input button
 function displayInput() {
+
     var menu = document.getElementsByClassName('KPLCD5C-b-R');
     console.log(menu);
 
     var fileChooser = document.createElement("input");
     fileChooser.type = 'file';
+    fileChooser.style.display = 'none';
+    var buttonFileChooser = document.createElement("a");
+    var textnode = document.createTextNode("UPLOAD");
+    buttonFileChooser.appendChild(textnode);
+
+    buttonFileChooser.className = 'KPLCD5C-x-q';
     console.log('appending input');
     fileChooser.addEventListener('change', function(evt) {
         console.log('inside content script change event');
@@ -70,6 +78,8 @@ function displayInput() {
         }
     });
     document.getElementsByClassName('KPLCD5C-b-R')[0].appendChild(fileChooser);
+    document.getElementsByClassName('KPLCD5C-b-R')[0].appendChild(buttonFileChooser);
+    buttonFileChooser.addEventListener('click', function() { fileChooser.click() });
 }
 
 function setFileData(data) {
