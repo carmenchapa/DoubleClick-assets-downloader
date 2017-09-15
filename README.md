@@ -6,7 +6,7 @@
 
 ## Installation
 
-1. Go to Google [Chrome Web Store]()
+1. Go to Google [Chrome Web Store](https://chrome.google.com/webstore/detail/double-click-assets-downl/bjipniagecflejnaojalejgihdnfemah?hl=en)
 2. Add the extension to your chrome.
 
 ## Usage
